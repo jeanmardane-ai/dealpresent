@@ -1,0 +1,7 @@
+node_modules/
+*.log
+config/config.json
+generated/*.html
+generated/*.json
+uploads/
+.env
