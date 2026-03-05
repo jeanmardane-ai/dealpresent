@@ -17,12 +17,21 @@ app.use('/deals', express.static(path.join(__dirname, '../generated')));
 // Upload configuration
 const upload = multer({ dest: path.join(__dirname, '../uploads') });
 
-// Load config
-let config = {};
-try {
-  config = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/config.json'), 'utf8'));
-} catch (e) {
-  console.warn('No config file found, using defaults');
+// Load config (prioritize ENV vars for Railway deployment)
+let config = {
+  apiKey: process.env.API_KEY || process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY,
+  provider: process.env.API_PROVIDER || 'openrouter',
+  model: process.env.API_MODEL || 'anthropic/claude-sonnet-4-5'
+};
+
+// Fallback to config file if no env vars
+if (!config.apiKey) {
+  try {
+    const fileConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/config.json'), 'utf8'));
+    config = { ...config, ...fileConfig };
+  } catch (e) {
+    console.warn('No config file found and no ENV vars set');
+  }
 }
 
 // Helper: Generate slug from address
@@ -35,22 +44,29 @@ function slugify(text) {
 
 // Helper: Call AI API to generate HTML
 async function generateHTML(propertyData) {
+  const accentColor = propertyData.accentColor || '#c8a45c';
+  const customTitle = propertyData.customTitle || '';
+  
   const prompt = `Tu es un expert en présentation immobilière. Génère une page HTML complète et professionnelle pour ce bien immobilier.
 
 Données du bien:
 ${JSON.stringify(propertyData, null, 2)}
 
 Instructions:
-- Utilise le même style que la page Carvin (design premium or/noir, élégant)
+- Design premium et élégant, moderne
 - Structure: Hero avec photo, barre de prix, sections (présentation, lots, rentabilité, projet)
 - Calcule automatiquement: investissement total, revenus annuels, rendement brut %, ROI en années
 - Inclus toutes les sections: description, lots détaillés avec cartes, rentabilité avec highlight du rendement, timeline du projet
 - Design responsive, animations au scroll
 - Retourne UNIQUEMENT le HTML complet (<!DOCTYPE html>... </html>), rien d'autre
 
-Template de référence: page style magazine immobilier, typographie Playfair Display + Inter, couleurs or (#c8a45c) et dark (#1a1a2e).`;
+PERSONNALISATION OBLIGATOIRE:
+- Couleur d'accent: ${accentColor} (à utiliser pour boutons, highlights, accents)
+${customTitle ? `- Ajoute en footer ou header: "${customTitle}"` : ''}
 
-  const apiKey = config.apiKey || process.env.ANTHROPIC_API_KEY;
+Template de référence: page style magazine immobilier, typographie Playfair Display + Inter, dark theme avec couleur accent personnalisée.`;
+
+  const apiKey = config.apiKey;
   const apiProvider = config.provider || 'anthropic';
 
   if (!apiKey) {
@@ -120,28 +136,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Get config status
-app.get('/api/config', (req, res) => {
-  res.json({
-    configured: !!config.apiKey,
-    provider: config.provider || 'anthropic',
-    model: config.model || 'claude-sonnet-4-5'
-  });
-});
-
-// Update config
-app.post('/api/config', (req, res) => {
-  const { apiKey, provider, model } = req.body;
-  
-  config = { apiKey, provider, model };
-  
-  fs.writeFileSync(
-    path.join(__dirname, '../config/config.json'),
-    JSON.stringify(config, null, 2)
-  );
-  
-  res.json({ success: true, message: 'Configuration saved' });
-});
+// Config endpoints removed - API key is now configured via Railway ENV vars
+// Set API_KEY, API_PROVIDER, and API_MODEL in Railway dashboard
 
 // Generate presentation
 app.post('/api/generate', upload.single('photo'), async (req, res) => {
@@ -151,7 +147,9 @@ app.post('/api/generate', upload.single('photo'), async (req, res) => {
       purchasePrice: parseFloat(req.body.purchasePrice),
       renovationCost: parseFloat(req.body.renovationCost) || 0,
       photo: req.file ? `/uploads/${req.file.filename}` : null,
-      units: JSON.parse(req.body.units || '[]')
+      units: JSON.parse(req.body.units || '[]'),
+      accentColor: req.body.accentColor || '#c8a45c',
+      customTitle: req.body.customTitle || ''
     };
 
     // Calculate totals

@@ -3,55 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DealPresent — Présentations immobilières en 2 minutes</title>
+    <title>DealPresent — Créez des présentations immobilières en 2 minutes</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary: #c8a45c;
-            --dark: #1a1a2e;
-            --bg: #fafaf8;
-            --border: #e8e8e4;
-            --text: #2d2d3a;
-            --text-light: #6b6b80;
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --dark: #0f172a;
+            --surface: #1e293b;
+            --bg: #0f172a;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: var(--text);
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 3rem 2rem;
+            padding: 2rem;
         }
 
         header {
             text-align: center;
-            margin-bottom: 3rem;
+            padding: 3rem 0;
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
 
         h1 {
             font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+        }
+
+        .wizard {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 700;
-            color: var(--dark);
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-circle {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        .step.completed .step-circle {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .step-label {
+            font-size: 0.875rem;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .step.active .step-label {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
             margin-bottom: 0.5rem;
         }
 
-        .subtitle {
-            font-size: 1.1rem;
-            color: var(--text-light);
-        }
-
-        .card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
+        .section-subtitle {
+            color: var(--text-dim);
             margin-bottom: 2rem;
         }
 
@@ -63,25 +163,30 @@
             display: block;
             font-weight: 600;
             margin-bottom: 0.5rem;
-            color: var(--dark);
+            color: var(--text);
         }
 
-        input, textarea {
+        input, textarea, select {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.875rem;
+            background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 8px;
+            color: var(--text);
             font-family: inherit;
             font-size: 1rem;
+            transition: all 0.2s;
         }
 
-        input:focus, textarea:focus {
+        input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
-        .units-container {
-            margin-top: 1rem;
+        textarea {
+            resize: vertical;
+            min-height: 100px;
         }
 
         .unit-row {
@@ -92,49 +197,86 @@
             align-items: end;
         }
 
-        .unit-row input {
-            margin-bottom: 0;
-        }
-
         .btn {
-            padding: 0.75rem 1.5rem;
+            padding: 0.875rem 1.5rem;
             border: none;
             border-radius: 8px;
             font-weight: 600;
-            cursor: pointer;
             font-size: 1rem;
-            transition: all 0.3s;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .btn-primary {
             background: var(--primary);
             color: white;
-            width: 100%;
-            padding: 1rem;
-            font-size: 1.1rem;
         }
 
         .btn-primary:hover {
-            background: #a8873d;
+            background: var(--primary-dark);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
 
         .btn-secondary {
-            background: var(--bg);
+            background: var(--surface);
             color: var(--text);
             border: 1px solid var(--border);
         }
 
+        .btn-secondary:hover {
+            background: var(--bg);
+        }
+
         .btn-remove {
-            background: #fee;
-            color: #c00;
+            background: #dc2626;
+            color: white;
             padding: 0.5rem;
+        }
+
+        .btn-remove:hover {
+            background: #991b1b;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .result {
             display: none;
             text-align: center;
-            padding: 2rem;
+            padding: 3rem;
         }
 
         .result.show {
@@ -142,8 +284,7 @@
         }
 
         .result-url {
-            background: var(--dark);
-            color: white;
+            background: var(--bg);
             padding: 1.5rem;
             border-radius: 8px;
             margin: 1.5rem 0;
@@ -153,115 +294,118 @@
         .result-url a {
             color: var(--primary);
             text-decoration: none;
+            font-weight: 600;
         }
 
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 2rem;
+        .result-url a:hover {
+            text-decoration: underline;
         }
 
-        .loading.show {
-            display: block;
+        .color-picker-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.75rem;
         }
 
-        .spinner {
-            border: 4px solid var(--border);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .config-section {
-            background: #fff9ed;
-            border: 2px solid var(--primary);
-            padding: 1.5rem;
+        .color-option {
+            padding: 0.75rem;
+            border: 2px solid var(--border);
             border-radius: 8px;
-            margin-bottom: 2rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
         }
 
-        .config-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
+        .color-option:hover {
+            border-color: var(--primary);
         }
 
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
+        .color-option.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
         }
 
-        .status-ok { background: #4ade80; }
-        .status-error { background: #f87171; }
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            margin: 0 auto 0.5rem;
+        }
+
+        .option-label {
+            font-size: 0.875rem;
+            color: var(--text-dim);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .wizard { padding: 1.5rem; }
+            .unit-row {
+                grid-template-columns: 1fr;
+            }
+            .color-picker-group {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🏢 DealPresent</h1>
-            <p class="subtitle">Créez des présentations immobilières professionnelles en 2 minutes</p>
+            <div class="logo">🏢</div>
+            <h1>DealPresent</h1>
+            <p class="tagline">Créez des présentations immobilières professionnelles en 2 minutes</p>
         </header>
 
-        <!-- Config Section -->
-        <div class="config-section" id="configSection">
-            <div class="config-status">
-                <span class="status-dot status-error" id="statusDot"></span>
-                <strong id="statusText">Configuration requise</strong>
+        <div class="wizard" id="wizard">
+            <div class="steps">
+                <div class="step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Informations</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Unités</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Style</div>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Clé API</label>
-                <input type="password" id="apiKey" placeholder="sk-ant-... (Claude) / sk-... (OpenAI/OpenRouter)">
-            </div>
-            <div class="form-group">
-                <label>Provider</label>
-                <select id="provider" class="btn" style="width: 100%;">
-                    <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="openai">OpenAI (GPT)</option>
-                    <option value="openrouter">OpenRouter (tous modèles)</option>
-                </select>
-            </div>
-            <button class="btn btn-primary" onclick="saveConfig()">💾 Enregistrer la configuration</button>
-        </div>
 
-        <!-- Main Form -->
-        <div class="card">
-            <form id="dealForm" onsubmit="generatePresentation(event)">
-                <div class="form-group">
-                    <label>📍 Adresse du bien</label>
-                    <input type="text" name="address" placeholder="91 Rue Jean Moulin, 62220 Carvin" required>
+            <form id="dealForm">
+                <!-- Step 1: Basic Info -->
+                <div class="form-section active" data-section="1">
+                    <h2 class="section-title">Informations du bien</h2>
+                    <p class="section-subtitle">Commencez par les détails essentiels</p>
+
+                    <div class="form-group">
+                        <label>📍 Adresse complète</label>
+                        <input type="text" name="address" placeholder="91 Rue Jean Moulin, 62220 Carvin" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>💰 Prix d'achat (€)</label>
+                        <input type="number" name="purchasePrice" placeholder="180000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔧 Montant travaux (€) <span style="font-weight: 400; color: var(--text-dim);">— Optionnel</span></label>
+                        <input type="number" name="renovationCost" placeholder="130000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>📸 Photo du bien <span style="font-weight: 400; color: var(--text-dim);">— Optionnel</span></label>
+                        <input type="file" name="photo" accept="image/*">
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>💰 Prix d'achat (€)</label>
-                    <input type="number" name="purchasePrice" placeholder="180000" required>
-                </div>
+                <!-- Step 2: Units -->
+                <div class="form-section" data-section="2">
+                    <h2 class="section-title">Unités locatives</h2>
+                    <p class="section-subtitle">Ajoutez chaque local, appartement ou entrepôt</p>
 
-                <div class="form-group">
-                    <label>🔧 Montant travaux (€) <span style="font-weight: 400; color: var(--text-light);">— Optionnel</span></label>
-                    <input type="number" name="renovationCost" placeholder="130000">
-                </div>
-
-                <div class="form-group">
-                    <label>📸 Photo du bien <span style="font-weight: 400; color: var(--text-light);">— Optionnel</span></label>
-                    <input type="file" name="photo" accept="image/*">
-                </div>
-
-                <div class="form-group">
-                    <label>🏠 Lots / Unités locatives</label>
-                    <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 1rem;">
-                        Ajoutez chaque unité (local, entrepôt, appartement, etc.)
-                    </p>
-                    <div class="units-container" id="unitsContainer">
+                    <div id="unitsContainer">
                         <div class="unit-row">
                             <input type="text" placeholder="Type (ex: Local commercial)" class="unit-type" required>
                             <input type="number" placeholder="Surface (m²)" class="unit-surface" required>
@@ -269,25 +413,64 @@
                             <button type="button" class="btn btn-remove" onclick="removeUnit(this)">❌</button>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-secondary" onclick="addUnit()">➕ Ajouter une unité</button>
+                    <button type="button" class="btn btn-secondary" onclick="addUnit()" style="margin-top: 1rem;">➕ Ajouter une unité</button>
                 </div>
 
-                <button type="submit" class="btn btn-primary">🚀 Générer la présentation</button>
+                <!-- Step 3: Customization -->
+                <div class="form-section" data-section="3">
+                    <h2 class="section-title">Personnalisation</h2>
+                    <p class="section-subtitle">Choisissez le style de votre présentation</p>
+
+                    <div class="form-group">
+                        <label>🎨 Couleur d'accent</label>
+                        <div class="color-picker-group">
+                            <div class="color-option selected" data-color="#c8a45c" onclick="selectColor(this)">
+                                <div class="color-swatch" style="background: #c8a45c;"></div>
+                                <div class="option-label">Or</div>
+                            </div>
+                            <div class="color-option" data-color="#6366f1" onclick="selectColor(this)">
+                                <div class="color-swatch" style="background: #6366f1;"></div>
+                                <div class="option-label">Indigo</div>
+                            </div>
+                            <div class="color-option" data-color="#10b981" onclick="selectColor(this)">
+                                <div class="color-swatch" style="background: #10b981;"></div>
+                                <div class="option-label">Vert</div>
+                            </div>
+                            <div class="color-option" data-color="#ef4444" onclick="selectColor(this)">
+                                <div class="color-swatch" style="background: #ef4444;"></div>
+                                <div class="option-label">Rouge</div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="accentColor" value="#c8a45c">
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 Titre personnalisé <span style="font-weight: 400; color: var(--text-dim);">— Optionnel</span></label>
+                        <input type="text" name="customTitle" placeholder="Votre Nom — Expert Immobilier">
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display: none;">← Précédent</button>
+                    <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">Suivant →</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" style="display: none;">🚀 Générer la présentation</button>
+                </div>
             </form>
         </div>
 
-        <!-- Loading State -->
+        <!-- Loading -->
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Génération de votre présentation en cours...</p>
-            <p style="color: var(--text-light); margin-top: 0.5rem;">Cela peut prendre 10-20 secondes</p>
+            <h2 style="margin-bottom: 0.5rem;">Génération en cours...</h2>
+            <p style="color: var(--text-dim);">Création de votre présentation professionnelle</p>
         </div>
 
         <!-- Result -->
         <div class="result" id="result">
-            <h2 style="margin-bottom: 1rem;">✅ Présentation créée !</h2>
+            <h2 style="margin-bottom: 1rem; font-size: 2rem;">✅ Présentation créée !</h2>
             <div class="result-url">
-                <strong>URL de votre présentation :</strong><br>
+                <strong>Votre présentation est prête :</strong><br><br>
                 <a href="#" id="resultLink" target="_blank"></a>
             </div>
             <button class="btn btn-primary" onclick="location.reload()">Créer une nouvelle présentation</button>
@@ -295,47 +478,42 @@
     </div>
 
     <script>
-        // Check config on load
-        window.onload = async () => {
-            try {
-                const res = await fetch('/api/config');
-                const data = await res.json();
-                
-                if (data.configured) {
-                    document.getElementById('statusDot').className = 'status-dot status-ok';
-                    document.getElementById('statusText').textContent = `Configuré (${data.provider})`;
-                }
-            } catch (e) {
-                console.error('Config check failed:', e);
+        let currentStep = 1;
+
+        function updateSteps() {
+            document.querySelectorAll('.step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                step.classList.toggle('active', stepNum === currentStep);
+                step.classList.toggle('completed', stepNum < currentStep);
+            });
+
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.toggle('active', parseInt(section.dataset.section) === currentStep);
+            });
+
+            document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-flex' : 'none';
+            document.getElementById('nextBtn').style.display = currentStep < 3 ? 'inline-flex' : 'none';
+            document.getElementById('submitBtn').style.display = currentStep === 3 ? 'inline-flex' : 'none';
+        }
+
+        function nextStep() {
+            if (currentStep < 3) {
+                currentStep++;
+                updateSteps();
             }
-        };
+        }
 
-        async function saveConfig() {
-            const apiKey = document.getElementById('apiKey').value;
-            const provider = document.getElementById('provider').value;
-
-            if (!apiKey) {
-                alert('Veuillez entrer une clé API');
-                return;
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateSteps();
             }
+        }
 
-            try {
-                const res = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ apiKey, provider })
-                });
-
-                if (res.ok) {
-                    document.getElementById('statusDot').className = 'status-dot status-ok';
-                    document.getElementById('statusText').textContent = `Configuré (${provider})`;
-                    alert('✅ Configuration enregistrée !');
-                } else {
-                    alert('❌ Erreur lors de l\'enregistrement');
-                }
-            } catch (e) {
-                alert('❌ Erreur de connexion');
-            }
+        function selectColor(element) {
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            document.querySelector('[name="accentColor"]').value = element.dataset.color;
         }
 
         function addUnit() {
@@ -343,7 +521,7 @@
             const row = document.createElement('div');
             row.className = 'unit-row';
             row.innerHTML = `
-                <input type="text" placeholder="Type (ex: Entrepôt)" class="unit-type" required>
+                <input type="text" placeholder="Type (ex: Appartement)" class="unit-type" required>
                 <input type="number" placeholder="Surface (m²)" class="unit-surface" required>
                 <input type="number" placeholder="Loyer (€/mois)" class="unit-rent" required>
                 <button type="button" class="btn btn-remove" onclick="removeUnit(this)">❌</button>
@@ -356,15 +534,14 @@
             if (container.children.length > 1) {
                 btn.parentElement.remove();
             } else {
-                alert('Il faut au moins une unité');
+                alert('Il faut au moins une unité locative');
             }
         }
 
-        async function generatePresentation(e) {
+        document.getElementById('dealForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const form = document.getElementById('dealForm');
-            const formData = new FormData(form);
+            const formData = new FormData(e.target);
 
             // Collect units
             const units = [];
@@ -375,11 +552,10 @@
                     rent: row.querySelector('.unit-rent').value
                 });
             });
-
             formData.append('units', JSON.stringify(units));
 
             // Show loading
-            document.querySelector('.card').style.display = 'none';
+            document.getElementById('wizard').style.display = 'none';
             document.getElementById('loading').classList.add('show');
 
             try {
@@ -401,10 +577,10 @@
                 }
             } catch (error) {
                 alert('❌ Erreur : ' + error.message);
-                document.querySelector('.card').style.display = 'block';
+                document.getElementById('wizard').style.display = 'block';
                 document.getElementById('loading').classList.remove('show');
             }
-        }
+        });
     </script>
 </body>
 </html>
