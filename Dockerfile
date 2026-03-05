@@ -1,10 +1,13 @@
 FROM node:20-slim
 WORKDIR /app
-COPY backend/package*.json ./
+COPY backend/package*.json ./backend/
+WORKDIR /app/backend
 RUN npm install --production
-COPY backend/server.js ./
-COPY frontend ./frontend
-RUN mkdir -p generated config uploads
+WORKDIR /app
+COPY backend/ ./backend/
+COPY frontend/ ./frontend/
+COPY config/ ./config/
+RUN mkdir -p generated uploads
 EXPOSE 3501
 ENV PORT=3501
-CMD ["node", "server.js"]
+CMD ["node", "backend/server.js"]
