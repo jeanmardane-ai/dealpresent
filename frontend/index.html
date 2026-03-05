@@ -13,6 +13,8 @@
             --primary: #6366f1;
             --primary-dark: #4f46e5;
             --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
             --dark: #0f172a;
             --surface: #1e293b;
             --bg: #0f172a;
@@ -381,7 +383,8 @@
 
                     <div class="form-group">
                         <label>📍 Adresse complète</label>
-                        <input type="text" name="address" placeholder="91 Rue Jean Moulin, 62220 Carvin" required>
+                        <input type="text" name="address" id="addressInput" placeholder="91 Rue Jean Moulin, 62220 Carvin" required>
+                        <div id="addressPreview" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-dim);"></div>
                     </div>
 
                     <div class="form-group">
@@ -538,6 +541,37 @@
             }
         }
 
+        // Address validation and preview
+        let addressTimeout;
+        document.getElementById('addressInput').addEventListener('input', (e) => {
+            clearTimeout(addressTimeout);
+            const address = e.target.value;
+            
+            if (address.length < 10) {
+                document.getElementById('addressPreview').innerHTML = '';
+                return;
+            }
+            
+            addressTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/geocode?address=${encodeURIComponent(address)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        document.getElementById('addressPreview').innerHTML = `
+                            ✅ <strong>${data.city}</strong>, ${data.postcode} — 
+                            <span style="color: var(--success);">Adresse validée</span>
+                        `;
+                    } else {
+                        document.getElementById('addressPreview').innerHTML = `
+                            ⚠️ <span style="color: var(--warning);">Adresse non reconnue</span>
+                        `;
+                    }
+                } catch (err) {
+                    document.getElementById('addressPreview').innerHTML = '';
+                }
+            }, 800);
+        });
+        
         document.getElementById('dealForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 

@@ -42,6 +42,62 @@ function slugify(text) {
     .replace(/^-|-$/g, '');
 }
 
+// Helper: Geocode address via API Adresse (data.gouv.fr)
+async function geocodeAddress(address) {
+  try {
+    const res = await axios.get('https://api-adresse.data.gouv.fr/search/', {
+      params: { q: address, limit: 1 }
+    });
+    
+    if (res.data.features && res.data.features.length > 0) {
+      const feature = res.data.features[0];
+      return {
+        latitude: feature.geometry.coordinates[1],
+        longitude: feature.geometry.coordinates[0],
+        formatted: feature.properties.label,
+        city: feature.properties.city,
+        postcode: feature.properties.postcode,
+        context: feature.properties.context,
+        score: feature.properties.score
+      };
+    }
+    return null;
+  } catch (err) {
+    console.error('Geocoding error:', err);
+    return null;
+  }
+}
+
+// Helper: Get cadastral info via API Cadastre
+async function getCadastralInfo(latitude, longitude) {
+  try {
+    // API Cadastre - parcelles par coordonnées
+    const res = await axios.get('https://apicarto.ign.fr/api/cadastre/parcelle', {
+      params: {
+        geom: `{"type":"Point","coordinates":[${longitude},${latitude}]}`,
+        _limit: 5
+      }
+    });
+    
+    if (res.data.features && res.data.features.length > 0) {
+      const parcels = res.data.features.map(f => ({
+        id_parcelle: f.properties.id_parcelle,
+        commune: f.properties.commune,
+        section: f.properties.section,
+        numero: f.properties.numero,
+        contenance: f.properties.contenance, // surface en m²
+        code_commune: f.properties.code_commune
+      }));
+      
+      return parcels;
+    }
+    return null;
+  } catch (err) {
+    console.error('Cadastre error:', err);
+    return null;
+  }
+}
+
 // Helper: Call AI API to generate HTML
 async function generateHTML(propertyData) {
   const accentColor = propertyData.accentColor || '#c8a45c';
@@ -54,11 +110,27 @@ ${JSON.stringify(propertyData, null, 2)}
 
 Instructions:
 - Design premium et élégant, moderne
-- Structure: Hero avec photo, barre de prix, sections (présentation, lots, rentabilité, projet)
+- Structure: Hero avec photo, barre de prix, sections (présentation, lots, rentabilité, localisation, projet)
 - Calcule automatiquement: investissement total, revenus annuels, rendement brut %, ROI en années
 - Inclus toutes les sections: description, lots détaillés avec cartes, rentabilité avec highlight du rendement, timeline du projet
 - Design responsive, animations au scroll
 - Retourne UNIQUEMENT le HTML complet (<!DOCTYPE html>... </html>), rien d'autre
+
+${propertyData.geolocation ? `
+LOCALISATION & CARTE (OBLIGATOIRE):
+- Ajoute une section "Localisation" avec une carte interactive Leaflet.js
+- Coordonnées GPS: ${propertyData.geolocation.latitude}, ${propertyData.geolocation.longitude}
+- Ville: ${propertyData.geolocation.city}, ${propertyData.geolocation.postcode}
+- Utilise Leaflet.js (CDN) pour afficher la carte avec un marqueur sur le bien
+- Template carte: <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+` : ''}
+
+${propertyData.cadastre && propertyData.cadastre.length > 0 ? `
+INFORMATIONS CADASTRALES (OBLIGATOIRE):
+Ajoute une section "Informations Cadastrales" avec ces données officielles :
+${propertyData.cadastre.map(p => `- Parcelle ${p.section}${p.numero}, Commune ${p.commune}, Surface cadastrale: ${p.contenance}m²`).join('\n')}
+` : ''}
 
 PERSONNALISATION OBLIGATOIRE:
 - Couleur d'accent: ${accentColor} (à utiliser pour boutons, highlights, accents)
@@ -141,6 +213,40 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// API: Geocode address (for autocomplete/validation)
+app.get('/api/geocode', async (req, res) => {
+  const address = req.query.address;
+  
+  if (!address) {
+    return res.status(400).json({ error: 'Address required' });
+  }
+  
+  const geoData = await geocodeAddress(address);
+  
+  if (geoData) {
+    res.json(geoData);
+  } else {
+    res.status(404).json({ error: 'Address not found' });
+  }
+});
+
+// API: Get cadastral info
+app.get('/api/cadastre', async (req, res) => {
+  const { lat, lon } = req.query;
+  
+  if (!lat || !lon) {
+    return res.status(400).json({ error: 'Latitude and longitude required' });
+  }
+  
+  const cadastre = await getCadastralInfo(parseFloat(lat), parseFloat(lon));
+  
+  if (cadastre) {
+    res.json({ parcels: cadastre });
+  } else {
+    res.status(404).json({ error: 'No cadastral data found' });
+  }
+});
+
 // Admin: Get config status (without exposing the key)
 app.get('/api/admin/config', (req, res) => {
   res.json({
@@ -196,6 +302,24 @@ app.post('/api/generate', upload.single('photo'), async (req, res) => {
       accentColor: req.body.accentColor || '#c8a45c',
       customTitle: req.body.customTitle || ''
     };
+    
+    // Enrich with geolocation
+    const geoData = await geocodeAddress(propertyData.address);
+    if (geoData) {
+      propertyData.geolocation = {
+        latitude: geoData.latitude,
+        longitude: geoData.longitude,
+        city: geoData.city,
+        postcode: geoData.postcode,
+        formatted: geoData.formatted
+      };
+      
+      // Get cadastral info
+      const cadastre = await getCadastralInfo(geoData.latitude, geoData.longitude);
+      if (cadastre && cadastre.length > 0) {
+        propertyData.cadastre = cadastre;
+      }
+    }
 
     // Calculate totals
     const totalInvestment = propertyData.purchasePrice + propertyData.renovationCost;
