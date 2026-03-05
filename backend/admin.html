@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealPresent — Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            color: #1a202c;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .info-box {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            color: #4a5568;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .status-ok {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-missing {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Configuration Admin</h1>
+        <p class="subtitle">Configurez votre clé API en toute sécurité</p>
+        
+        <div id="alert"></div>
+        
+        <div id="loginForm">
+            <div class="info-box">
+                🔒 Mot de passe requis pour accéder à la configuration
+            </div>
+            <div class="form-group">
+                <label>Mot de passe Admin</label>
+                <input type="password" id="adminPassword" placeholder="Entrez le mot de passe">
+            </div>
+            <button class="btn" onclick="login()">Accéder</button>
+        </div>
+        
+        <div id="configForm" style="display: none;">
+            <div class="form-group">
+                <label>Statut API</label>
+                <div id="apiStatus"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Provider</label>
+                <select id="provider">
+                    <option value="openrouter">OpenRouter (recommandé)</option>
+                    <option value="anthropic">Anthropic (Claude direct)</option>
+                    <option value="openai">OpenAI (GPT)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Modèle</label>
+                <select id="model">
+                    <option value="anthropic/claude-sonnet-4-5">Claude Sonnet 4.5 (recommandé)</option>
+                    <option value="anthropic/claude-haiku-4-5">Claude Haiku 4.5 (économique)</option>
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Clé API</label>
+                <input type="password" id="apiKey" placeholder="sk-...">
+                <small style="color: #718096; display: block; margin-top: 0.5rem;">
+                    🔒 Stockée de manière sécurisée côté serveur
+                </small>
+            </div>
+            
+            <button class="btn" onclick="saveConfig()">💾 Sauvegarder</button>
+            
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
+                <button class="btn" style="background: #e53e3e;" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const ADMIN_PASSWORD = 'dealpresent2026'; // Change this in production
+        let isAuthenticated = false;
+        
+        async function login() {
+            const password = document.getElementById('adminPassword').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                isAuthenticated = true;
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('configForm').style.display = 'block';
+                await loadConfig();
+            } else {
+                showAlert('❌ Mot de passe incorrect', 'error');
+            }
+        }
+        
+        function logout() {
+            isAuthenticated = false;
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('configForm').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+        }
+        
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/admin/config');
+                const data = await res.json();
+                
+                if (data.configured) {
+                    document.getElementById('apiStatus').innerHTML = '<span class="status status-ok">✅ Configuré</span>';
+                    document.getElementById('provider').value = data.provider;
+                    document.getElementById('model').value = data.model;
+                } else {
+                    document.getElementById('apiStatus').innerHTML = '<span class="status status-missing">❌ Non configuré</span>';
+                }
+            } catch (err) {
+                showAlert('❌ Erreur de chargement', 'error');
+            }
+        }
+        
+        async function saveConfig() {
+            if (!isAuthenticated) {
+                showAlert('❌ Non autorisé', 'error');
+                return;
+            }
+            
+            const apiKey = document.getElementById('apiKey').value;
+            const provider = document.getElementById('provider').value;
+            const model = document.getElementById('model').value;
+            
+            if (!apiKey) {
+                showAlert('❌ Veuillez entrer une clé API', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/admin/config', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Admin-Password': ADMIN_PASSWORD
+                    },
+                    body: JSON.stringify({ apiKey, provider, model })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    showAlert('✅ Configuration sauvegardée avec succès !', 'success');
+                    document.getElementById('apiKey').value = '';
+                    await loadConfig();
+                } else {
+                    showAlert('❌ ' + (data.error || 'Erreur inconnue'), 'error');
+                }
+            } catch (err) {
+                showAlert('❌ Erreur de sauvegarde', 'error');
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

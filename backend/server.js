@@ -136,8 +136,53 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Config endpoints removed - API key is now configured via Railway ENV vars
-// Set API_KEY, API_PROVIDER, and API_MODEL in Railway dashboard
+// Admin page
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// Admin: Get config status (without exposing the key)
+app.get('/api/admin/config', (req, res) => {
+  res.json({
+    configured: !!config.apiKey,
+    provider: config.provider || 'openrouter',
+    model: config.model || 'anthropic/claude-sonnet-4-5'
+  });
+});
+
+// Admin: Update config (password-protected)
+app.post('/api/admin/config', (req, res) => {
+  const adminPassword = req.headers['x-admin-password'];
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'dealpresent2026';
+  
+  if (adminPassword !== ADMIN_PASSWORD) {
+    return res.status(403).json({ success: false, error: 'Non autorisé' });
+  }
+  
+  const { apiKey, provider, model } = req.body;
+  
+  if (!apiKey) {
+    return res.status(400).json({ success: false, error: 'Clé API manquante' });
+  }
+  
+  // Update in-memory config
+  config.apiKey = apiKey;
+  config.provider = provider || 'openrouter';
+  config.model = model || 'anthropic/claude-sonnet-4-5';
+  
+  // Save to file (for persistence across restarts)
+  try {
+    fs.mkdirSync(path.join(__dirname, '../config'), { recursive: true });
+    fs.writeFileSync(
+      path.join(__dirname, '../config/config.json'),
+      JSON.stringify(config, null, 2)
+    );
+    res.json({ success: true, message: 'Configuration sauvegardée' });
+  } catch (err) {
+    console.error('Error saving config:', err);
+    res.status(500).json({ success: false, error: 'Erreur de sauvegarde' });
+  }
+});
 
 // Generate presentation
 app.post('/api/generate', upload.single('photo'), async (req, res) => {
